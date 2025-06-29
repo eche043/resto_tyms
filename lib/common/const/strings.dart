@@ -1,0 +1,48 @@
+// Used Later For Strings
+
+
+// const appname = "Food Delivery",
+//     login = "Login",
+//     welcome = "Hi, Welcome to",
+//     email = "Email",
+//     password = "Password",
+//     confirmpassword = "Confirm Password",
+//     forgotpassword = "Forgot Password?",
+//     anyproblem = "In case of any difficulty, contact administration",
+//     emailHint = "Enter your email",
+//     passwordHint = "Enter your password",
+//     dashboard = "Dashboard",
+//     orders = "Orders",
+//     logout = "LogOut",
+//     editprofile = "Edit Profile",
+//     chats = "Chats",
+//     loginto = "Login to your account",
+//     shopsettings = "Shop Settings",
+//     messages = "Messages",
+//     changeImage = "Change Image",
+//     products = "Products",
+//     settings = "Settings",
+//     save = "Save",
+//     rating = "Rating",
+//     totalsales = "Total Sales",
+//     logInTo = "Login to your account",
+//     popular = "Popular Products",
+//     unpaid = "UnPaid",
+//     featured = "Featured",
+//     edit = "Edit",
+//     name = "Username",
+//     remove = "Remove",
+//     credit = "@AdeelDevSkills";
+
+// //shop settings strings
+
+// const nameHint = "eg. Vendor Name",
+//     shopdescHint = "Enter your shop description",
+//     shopwebsiteHint = "eg.Vendor.emart.com",
+//     shopmobileHint = "eg. +923177676310",
+//     shopaddressHint = "eg. Near main Bazar Faisalabad",
+//     description = "Description",
+//     mobile = "Shop Mobile",
+//     website = "Shop Website",
+//     shopname = "Shop Name",
+//     address = "Shop Address";

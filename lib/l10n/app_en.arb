@@ -1,0 +1,56 @@
+{
+        "products": "Products",
+        "totalEarnings": "Total Earnings",
+        "@totalEarnings": {
+            "description": "Label for total earnings"
+        },
+        "totalOrders": "Total Orders",
+        "@totalOrders": {
+            "description": "Label for total orders"
+        },
+    
+    "home": "Home",
+    "phone": "Phone",
+    "@phone":{
+        "description": "phone number"
+    },
+    "language_title": "languages",
+    "@language_title":{
+        "description": "language bar"
+    },
+    "phoneHint": "Enter your phone number",
+    "password": "Password",
+    "passwordHint": "Enter your password",
+    "phoneError": "Please enter your phone number",
+    "passwordError": "Please enter a password",
+    "forgetPassword": "Forget Password?",
+    "signIn": "Sign In",
+    "or": "OR",
+    "googleSignIn": "Continue with Google",
+    "appleSignIn": "Continue with Apple",
+    "haveAccount": "You do not have an account?",
+    "signUp": "Sign Up",
+    "orders": "Orders",
+    "newOrder": "New Order",
+    "new": "New",
+    "active": "Active",
+    "history": "History",
+    "noOrder": "No data",
+    "statistics": "Statistics",
+    "ranking": "Ranking",
+    "bestSellingProduct": "Best Selling Product",
+    "paymentHistory": "Payment history",
+    "manageMenuTrackOrders": "Manage your menu, track orders, and provide excellent dining service",
+    "loginAsRestaurant": "Login As Restaurant",
+    "loginAsMarket": "Login As Market",
+    "loginAsSupermarket": "Login As Supermarket",
+    "comingSoon": "Coming Soon",
+    "featureAvailableSoon": "This feature will be available soon. Stay tuned!",
+    "backToRoleSelection": "Back to Role Selection",
+    "restaurant": "Restaurant",
+    "market": "Market", 
+    "supermarket": "Supermarket",
+    "chooseYourRole": "Choose Your Role",
+    "ownerLogin": "Owner Login",
+    "managerLogin": "Manager Login"
+}

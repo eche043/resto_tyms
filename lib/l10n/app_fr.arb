@@ -1,0 +1,65 @@
+{
+        "products": "Produits",
+        "totalRestaurants": "Total Restaurants",
+        "@totalRestaurants": {
+            "description": "Label for total restaurants"
+        },
+        "totalProducts": "Total Produits",
+        "@totalProducts": {
+            "description": "Label for total products"
+        },
+    
+    
+        "totalEarnings": "Gains totaux",
+        "@totalEarnings": {
+            "description": "Label for total earnings"
+        },
+        "totalOrders": "Commandes totales",
+        "@totalOrders": {
+            "description": "Label for total orders"
+        },
+    
+    "home": "Accueil",
+    "phone": "Numéro de téléphone",
+    "@phone":{
+        "description": "phone number"
+    },
+    "language_title": "langages",
+    "@language_title":{
+        "description": "language bar"
+    },
+    "phoneHint": "Entrez votre numéro",
+    "password": "Mot de passe",
+    "passwordHint": "Entrez votre mot de passe",
+    "phoneError": "Entrez votre numéro svp",
+    "passwordError": "Entrez votre mot de passe",
+    "forgetPassword": "Mot de passe oublié?",
+    "signIn": "Se connecter",
+    "or": "OU",
+    "googleSignIn": "Continuer avec Google",
+    "appleSignIn": "Continuer avec Apple",
+    "haveAccount": "Vous n'avez pas de compte?",
+    "signUp": "S'inscrire",
+    "orders": "Commandes",
+    "newOrder": "Nouveau",
+    "active": "Active",
+    "history": "Historique",
+    "noOrder": "Aucune donnée disponible",
+    "statistics": "Statistiques",
+    "ranking": "Classement",
+    "bestSellingProduct": "Produits populaires",
+    "paymentHistory": "Historique des paiements",
+    "manageMenuTrackOrders": "Gérez votre menu, suivez les commandes et offrez un excellent service de restauration",
+    "loginAsRestaurant": "Connexion Restaurant",
+    "loginAsMarket": "Connexion Marché",
+    "loginAsSupermarket": "Connexion Supermarché",
+    "comingSoon": "Bientôt disponible",
+    "featureAvailableSoon": "Cette fonctionnalité sera bientôt disponible. Restez connectés !",
+    "backToRoleSelection": "Retour à la sélection du rôle",
+    "restaurant": "Restaurant",
+    "market": "Magasin",
+    "supermarket": "Supermarché",
+    "chooseYourRole": "Choisissez votre rôle",
+    "ownerLogin": "Connexion Propriétaire",
+    "managerLogin": "Connexion Manager"
+}

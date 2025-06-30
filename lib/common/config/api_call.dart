@@ -1383,6 +1383,247 @@ Future<Map<String, dynamic>> getTopFoods({
   }
 }
 
+/// Mettre à jour le statut d'un produit
+Future<Map<String, dynamic>> updateFoodStatus({
+  required String foodId,
+  required String newEtat,
+}) async {
+  final prefs = await SharedPreferences.getInstance();
+  final uid = prefs.getString('uuid') ?? '';
+
+  try {
+    final headers = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $uid',
+    };
+
+    // Utiliser votre endpoint exact
+    final url = '${serverPath}updateFoodStatus';
+
+    final body = json.encode({
+      'food_id': foodId,
+      'etat': newEtat,
+    });
+
+    print('Updating food status: $url');
+    print('Body: $body');
+
+    final response = await http
+        .post(Uri.parse(url), headers: headers, body: body)
+        .timeout(const Duration(seconds: 30));
+
+    print('Update food status response: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final jsonResult = json.decode(response.body);
+
+      if (jsonResult['error'] == '0') {
+        return {
+          'success': true,
+          'message': jsonResult['message'],
+          'food': jsonResult['food'],
+          'stats': jsonResult['stats'],
+          'allowed_statuses': jsonResult['allowed_statuses'],
+          'updated_by': jsonResult['updated_by'],
+        };
+      } else {
+        return {
+          'success': false,
+          'error': jsonResult['error'] ?? 'Erreur lors de la mise à jour',
+        };
+      }
+    } else if (response.statusCode == 401) {
+      return {
+        'success': false,
+        'error': 'Session expirée, veuillez vous reconnecter',
+      };
+    } else if (response.statusCode == 403) {
+      return {
+        'success': false,
+        'error': 'Permissions insuffisantes pour cette action',
+      };
+    } else if (response.statusCode == 404) {
+      return {
+        'success': false,
+        'error': 'Produit non trouvé',
+      };
+    } else {
+      return {
+        'success': false,
+        'error': 'Erreur de connexion (${response.statusCode})',
+      };
+    }
+  } catch (e) {
+    print('Update food status error: $e');
+    return {
+      'success': false,
+      'error': 'Erreur de connexion: ${e.toString()}',
+    };
+  }
+}
+
+/// Mettre à jour les heures d'ouverture d'un restaurant
+Future<Map<String, dynamic>> updateRestaurantHours({
+  required int restaurantId,
+  required Map<String, String> hoursData,
+}) async {
+  final prefs = await SharedPreferences.getInstance();
+  final uid = prefs.getString('uuid') ?? '';
+
+  try {
+    final headers = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $uid',
+    };
+
+    // Votre endpoint pour mettre à jour les heures
+    final url =
+        '${serverPath}updateRestaurantHours'; // À adapter selon votre API
+
+    final body = json.encode({
+      'restaurant_id': restaurantId,
+      'hours': hoursData,
+    });
+
+    print('Updating restaurant hours: $url');
+    print('Body: $body');
+
+    final response = await http
+        .post(Uri.parse(url), headers: headers, body: body)
+        .timeout(const Duration(seconds: 30));
+
+    print('Update restaurant hours response: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final jsonResult = json.decode(response.body);
+
+      if (jsonResult['error'] == '0') {
+        return {
+          'success': true,
+          'message': jsonResult['message'] ?? 'Heures mises à jour avec succès',
+          'restaurant': jsonResult['restaurant'],
+        };
+      } else {
+        return {
+          'success': false,
+          'error': jsonResult['error'] ?? 'Erreur lors de la mise à jour',
+        };
+      }
+    } else if (response.statusCode == 401) {
+      return {
+        'success': false,
+        'error': 'Session expirée, veuillez vous reconnecter',
+      };
+    } else if (response.statusCode == 403) {
+      return {
+        'success': false,
+        'error': 'Permissions insuffisantes pour cette action',
+      };
+    } else if (response.statusCode == 404) {
+      return {
+        'success': false,
+        'error': 'Restaurant non trouvé',
+      };
+    } else {
+      return {
+        'success': false,
+        'error': 'Erreur de connexion (${response.statusCode})',
+      };
+    }
+  } catch (e) {
+    print('Update restaurant hours error: $e');
+    return {
+      'success': false,
+      'error': 'Erreur de connexion: ${e.toString()}',
+    };
+  }
+}
+
+/// Mettre à jour le statut de pause d'un restaurant
+/// Mettre à jour le statut de pause d'un restaurant
+Future<Map<String, dynamic>> updateRestaurantPause({
+  required int restaurantId,
+  required bool isPaused,
+}) async {
+  final prefs = await SharedPreferences.getInstance();
+  final uid = prefs.getString('uuid') ?? '';
+
+  try {
+    final headers = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $uid',
+    };
+
+    // Votre endpoint pour mettre à jour le statut de pause
+    final url =
+        '${serverPath}updateRestaurantPause'; // À adapter selon votre API
+
+    final body = json.encode({
+      'restaurant_id': restaurantId,
+      'is_pause': isPaused ? 1 : 0, // Convertir bool vers int (0 ou 1)
+    });
+
+    print('Updating restaurant pause status: $url');
+    print('Body: $body');
+
+    final response = await http
+        .post(Uri.parse(url), headers: headers, body: body)
+        .timeout(const Duration(seconds: 30));
+
+    print('Update restaurant pause response: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final jsonResult = json.decode(response.body);
+
+      if (jsonResult['error'] == '0') {
+        return {
+          'success': true,
+          'message': jsonResult['message'] ??
+              (isPaused ? 'Restaurant mis en pause' : 'Restaurant réactivé'),
+          'restaurant': jsonResult['restaurant'],
+        };
+      } else {
+        return {
+          'success': false,
+          'error': jsonResult['error'] ?? 'Erreur lors de la mise à jour',
+        };
+      }
+    } else if (response.statusCode == 401) {
+      return {
+        'success': false,
+        'error': 'Session expirée, veuillez vous reconnecter',
+      };
+    } else if (response.statusCode == 403) {
+      return {
+        'success': false,
+        'error': 'Permissions insuffisantes pour cette action',
+      };
+    } else if (response.statusCode == 404) {
+      return {
+        'success': false,
+        'error': 'Restaurant non trouvé',
+      };
+    } else {
+      return {
+        'success': false,
+        'error': 'Erreur de connexion (${response.statusCode})',
+      };
+    }
+  } catch (e) {
+    print('Update restaurant pause error: $e');
+    return {
+      'success': false,
+      'error': 'Erreur de connexion: ${e.toString()}',
+    };
+  }
+}
+
 Future<Map<String, dynamic>?> getSelectedStatus(int orderId) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String uid = prefs.getString('uuid') ?? "";

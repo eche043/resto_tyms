@@ -11,6 +11,7 @@ import 'package:odrive_restaurant/providers/dashboard_provider.dart';
 import 'package:odrive_restaurant/providers/order_provider.dart';
 import 'package:odrive_restaurant/providers/product_provider.dart';
 import 'package:odrive_restaurant/providers/restaurant_provider.dart';
+import 'package:odrive_restaurant/providers/restaurants_detail_provider.dart';
 import 'package:odrive_restaurant/providers/role_provider.dart';
 import 'package:odrive_restaurant/providers/user_provider.dart';
 import 'package:odrive_restaurant/services/message_provider.dart';
@@ -34,6 +35,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (context) => ProductsProvider()),
         ChangeNotifierProvider(create: (context) => RestaurantsProvider()),
         ChangeNotifierProvider(create: (context) => RoleProvider()),
+        ChangeNotifierProvider(
+            create: (context) => RestaurantsDetailProvider()),
         ChangeNotifierProvider(
             create: (context) => UserProvider()..loadUserData()),
       ],

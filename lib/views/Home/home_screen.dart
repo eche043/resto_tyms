@@ -13,6 +13,7 @@ import 'package:odrive_restaurant/views/Home/widgets/stats_chart.dart';
 import 'package:odrive_restaurant/views/orders/orders_screen.dart';
 import 'package:odrive_restaurant/views/products/product_screen.dart';
 import 'package:odrive_restaurant/views/restaurants/restaurant_screen.dart';
+import 'package:odrive_restaurant/views/restaurants/restaurants_detail_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
@@ -164,6 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title: l10n.totalRestaurants,
               value: provider.totalRestaurants.toString(),
               onDetailPressed: () {
+                Get.to(() => const RestaurantsDetailScreen());
                 // TODO: Navigation vers les détails des restaurants
               },
             ),

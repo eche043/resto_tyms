@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:odrive_restaurant/common/util.dart';
@@ -77,6 +76,7 @@ class FoodsData {
   List<String> imagesFilesIds;
   List<VariantsData> variants;
   String? image;
+  String? etat;
 
   FoodsData(
       {required this.id,
@@ -94,7 +94,8 @@ class FoodsData {
       required this.discountprice,
       required this.imagesFilesIds,
       required this.variants,
-      this.image});
+      this.image,
+      this.etat});
   factory FoodsData.fromJson(Map<String, dynamic> json) {
     List<String> _imagesFilesIds = [];
     if (json['images'] != null)
@@ -119,7 +120,8 @@ class FoodsData {
         category: toInt(json['category'].toString()),
         imagesFilesIds: _imagesFilesIds,
         variants: _variants,
-        image: json['image'].toString());
+        image: json['image'].toString(),
+        etat: json['etat'].toString());
   }
 }
 
@@ -200,10 +202,21 @@ class RestaurantData {
   String desc;
   String fee;
   int percent;
+  int is_pause;
   String openTimeMonday;
   String closeTimeMonday;
   String openTimeTuesday;
   String closeTimeTuesday;
+  String openTimeWednesday;
+  String closeTimeWednesday;
+  String openTimeThursday;
+  String closeTimeThursday;
+  String openTimeFriday;
+  String closeTimeFriday;
+  String openTimeSaturday;
+  String closeTimeSaturday;
+  String openTimeSunday;
+  String closeTimeSunday;
 
   RestaurantData({
     required this.id,
@@ -224,10 +237,21 @@ class RestaurantData {
     required this.desc,
     required this.fee,
     required this.percent,
+    required this.is_pause,
     required this.openTimeMonday,
     required this.closeTimeMonday,
     required this.openTimeTuesday,
     required this.closeTimeTuesday,
+    required this.openTimeWednesday,
+    required this.closeTimeWednesday,
+    required this.openTimeThursday,
+    required this.closeTimeThursday,
+    required this.openTimeFriday,
+    required this.closeTimeFriday,
+    required this.openTimeSaturday,
+    required this.closeTimeSaturday,
+    required this.openTimeSunday,
+    required this.closeTimeSunday,
   });
 
   factory RestaurantData.fromJson(Map<String, dynamic> json) {
@@ -250,14 +274,24 @@ class RestaurantData {
       desc: json['desc'].toString(),
       fee: json['fee'].toString(),
       percent: int.parse(json['percent'].toString()),
+      is_pause: int.parse(json['is_pause'].toString()),
       openTimeMonday: json['openTimeMonday'].toString(),
       closeTimeMonday: json['closeTimeMonday'].toString(),
       openTimeTuesday: json['openTimeTuesday'].toString(),
       closeTimeTuesday: json['closeTimeTuesday'].toString(),
+      openTimeWednesday: json['openTimeWednesday'].toString(),
+      closeTimeWednesday: json['closeTimeWednesday'].toString(),
+      openTimeThursday: json['openTimeThursday'].toString(),
+      closeTimeThursday: json['closeTimeThursday'].toString(),
+      openTimeFriday: json['openTimeFriday'].toString(),
+      closeTimeFriday: json['closeTimeFriday'].toString(),
+      openTimeSaturday: json['openTimeSaturday'].toString(),
+      closeTimeSaturday: json['closeTimeSaturday'].toString(),
+      openTimeSunday: json['openTimeSunday'].toString(),
+      closeTimeSunday: json['closeTimeSunday'].toString(),
     );
   }
 }
-
 
 class ExtrasGroupData {
   int id;
@@ -295,6 +329,7 @@ class NutritionGroupData {
     );
   }
 }
+
 class ImageData {
   int id;
   String filename;

@@ -22,6 +22,7 @@ class _OrderDetailsState extends State<OrderDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: CustomDrawer(),
       body: Stack(
         children: [
           const BgContainer(),
@@ -46,8 +47,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                     order: widget.order,
                     distance: widget.distance,
                     history: widget.history,
-                    acceptSuccess: widget.acceptSuccess
-                    ),
+                    acceptSuccess: widget.acceptSuccess),
               ],
             ),
           ),

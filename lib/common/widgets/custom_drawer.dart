@@ -1,8 +1,10 @@
 import 'package:odrive_restaurant/common/config/api.dart';
 import 'package:odrive_restaurant/common/const/const.dart';
 import 'package:odrive_restaurant/providers/user_provider.dart';
+import 'package:odrive_restaurant/views/orders/in_progress_screen.dart';
 import 'package:odrive_restaurant/views/orders/orders_screen.dart';
 import 'package:odrive_restaurant/views/products/product_screen.dart';
+import 'package:odrive_restaurant/views/promotions/promotions_screen.dart';
 import 'package:odrive_restaurant/views/restaurants/restaurant_screen.dart';
 import 'package:odrive_restaurant/views/statut/statut_screen.dart';
 import 'package:provider/provider.dart';
@@ -105,6 +107,50 @@ class _CustomDrawerState extends State<CustomDrawer> {
                           ),
                           const SizedBox(width: 16),
                           'Orders'
+                              .text
+                              .color(fontGrey)
+                              .fontWeight(FontWeight.w400)
+                              .make(),
+                        ],
+                      ),
+                    ),
+                    10.heightBox,
+                    InkWell(
+                      onTap: () {
+                        Get.offAll(() => const InProgressScreen(),
+                            transition: Transition.downToUp,
+                            duration: const Duration(milliseconds: 500));
+                      },
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.trending_up,
+                            color: appColor,
+                          ),
+                          const SizedBox(width: 16),
+                          'En Progression'
+                              .text
+                              .color(fontGrey)
+                              .fontWeight(FontWeight.w400)
+                              .make(),
+                        ],
+                      ),
+                    ),
+                    10.heightBox,
+                    InkWell(
+                      onTap: () {
+                        Get.offAll(() => PromotionsScreen(),
+                            transition: Transition.downToUp,
+                            duration: const Duration(milliseconds: 500));
+                      },
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.campaign,
+                            color: appColor,
+                          ),
+                          const SizedBox(width: 16),
+                          'Promotions'
                               .text
                               .color(fontGrey)
                               .fontWeight(FontWeight.w400)

@@ -1,3 +1,5 @@
+// Remplacez le contenu de lib/views/map/map_screen.dart
+
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
@@ -12,7 +14,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
 import 'package:odrive_restaurant/model/order.dart';
 import 'dart:convert';
-
+import 'dart:async'; // ✅ Ajoutez cet import
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MapScreen extends StatefulWidget {
@@ -33,33 +35,52 @@ class _MapScreenState extends State<MapScreen> {
   List<LatLng> _polylinePoints = [];
   List<LatLng> _polylineCoordinates = [];
 
+  // ✅ Ajoutez cette variable pour gérer le StreamSubscription
+  StreamSubscription<LocationData>? _locationSubscription;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _getCurrentLocation();
     _updatePolyline();
-    //_setPolyline();
 
-    location.onLocationChanged.listen((LocationData currentLocation) {
+    // ✅ Modifiez cette partie pour stocker la subscription
+    _locationSubscription =
+        location.onLocationChanged.listen((LocationData currentLocation) {
       print('changement-------------------');
-      print(_currentLocation?.latitude);
-      print(_currentLocation?.longitude);
-      allMarkers.removeWhere(
-          (marker) => marker.markerId == const MarkerId("position livreur"));
-      setState(() {
-        _currentLocation = currentLocation;
-        _controller?.animateCamera(
-          CameraUpdate.newLatLng(
-            LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!),
-          ),
-        );
-        changePosition(_currentLocation);
-      });
+      print(currentLocation.latitude);
+      print(currentLocation.longitude);
+
+      // ✅ Vérifiez si le widget est encore monté avant d'appeler setState
+      if (mounted) {
+        allMarkers.removeWhere(
+            (marker) => marker.markerId == const MarkerId("position livreur"));
+        setState(() {
+          _currentLocation = currentLocation;
+          _controller?.animateCamera(
+            CameraUpdate.newLatLng(
+              LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!),
+            ),
+          );
+          changePosition(_currentLocation);
+        });
+      }
     });
   }
 
+  // ✅ Ajoutez cette méthode dispose pour annuler la subscription
+  @override
+  void dispose() {
+    // Annuler l'écoute des changements de localisation
+    _locationSubscription?.cancel();
+    _controller?.dispose();
+    super.dispose();
+  }
+
   void changePosition(currentPosition) async {
+    // ✅ Vérifiez si le widget est encore monté
+    if (!mounted) return;
+
     allMarkers.add(
       Marker(
         markerId: MarkerId("position livreur"),
@@ -72,16 +93,175 @@ class _MapScreenState extends State<MapScreen> {
         ),
       ),
     );
+
+    // ✅ Vérifiez encore une fois avant setState
+    if (mounted) {
+      setState(() {
+        allMarkers = allMarkers;
+      });
+    }
+  }
+
+  Future<Uint8List> getBytesFromAsset(String path, int width) async {
+    ByteData data = await rootBundle.load(path);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
+        targetWidth: width);
+    ui.FrameInfo fi = await codec.getNextFrame();
+    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
+        .buffer
+        .asUint8List();
+  }
+
+  Future<List<LatLng>> _getPolylinePoints(LatLng start, LatLng end) async {
+    List<LatLng> polylineCoordinates = [];
+    PolylinePoints polylinePoints = PolylinePoints();
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      'AIzaSyDggn6Hwt1gbuAlfnvJ12OGr8Ygd2ufddQ',
+      PointLatLng(start.latitude, start.longitude),
+      PointLatLng(end.latitude, end.longitude),
+      travelMode: TravelMode.driving,
+    );
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      });
+    } else {
+      print(result.errorMessage);
+    }
+    return polylineCoordinates;
+  }
+
+  void _updatePolyline() async {
+    if (_currentLocation == null) return;
+
+    List<LatLng> points = [];
+    points
+        .add(LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!));
+
+    if (!_shouldIncludeRestaurant()) {
+      points.addAll(await _getPolylinePoints(points.last, _restaurantPosition));
+    }
+    points.addAll(await _getPolylinePoints(points.last, _clientPosition));
+
+    // ✅ Vérifiez si le widget est encore monté
+    if (mounted) {
+      setState(() {
+        _polylinePoints = points;
+      });
+    }
+  }
+
+  double distanceBetween(double lat1, double lon1, double lat2, double lon2) {
+    const double earthRadius = 6371000;
+
+    double dLat = _degreesToRadians(lat2 - lat1);
+    double dLon = _degreesToRadians(lon2 - lon1);
+    double a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_degreesToRadians(lat1)) *
+            cos(_degreesToRadians(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    double distance = earthRadius * c;
+
+    return distance;
+  }
+
+  double _degreesToRadians(double degrees) {
+    return degrees * (pi / 180);
+  }
+
+  Future<void> _getCurrentLocation() async {
+    // ✅ Vérifiez si le widget est encore monté
+    if (!mounted) return;
+
     setState(() {
-      allMarkers = allMarkers;
+      _restaurantPosition = LatLng(double.parse(widget.order.latRest),
+          double.parse(widget.order.lngRest));
+      _clientPosition = LatLng(
+          double.parse(widget.order.lat), double.parse(widget.order.lng));
     });
+
+    Location location = Location();
+    try {
+      LocationData locationData = await location.getLocation();
+
+      // ✅ Vérifiez si le widget est encore monté
+      if (mounted) {
+        setState(() {
+          _currentLocation = locationData;
+        });
+      }
+
+      print("Latitude: ${_currentLocation!.latitude}");
+      print("Longitude: ${_currentLocation!.longitude}");
+      _markeradd();
+    } catch (e) {
+      print("Error getting location: $e");
+    }
+    _getDirections(_currentLocation, _clientPosition, _restaurantPosition);
+  }
+
+  bool _shouldIncludeRestaurant() {
+    if (_currentLocation == null) return true;
+    double distance = distanceBetween(
+      _currentLocation!.latitude!,
+      _currentLocation!.longitude!,
+      _restaurantPosition.latitude,
+      _restaurantPosition.longitude,
+    );
+    return distance > 100;
+  }
+
+  _markeradd() async {
+    // ✅ Vérifiez si le widget est encore monté
+    if (!mounted) return;
+
+    allMarkers.add(
+      Marker(
+        markerId: MarkerId("position livreur"),
+        position: LatLng(
+          _currentLocation!.latitude ?? 7.546855,
+          _currentLocation!.longitude ?? -5.5471,
+        ),
+        icon: BitmapDescriptor.fromBytes(
+          await getBytesFromAsset("assets/images/delivery.png", 130),
+        ),
+      ),
+    );
+
+    allMarkers.add(
+      Marker(
+        markerId: MarkerId("Restaurant"),
+        position: _restaurantPosition,
+        icon: BitmapDescriptor.fromBytes(
+          await getBytesFromAsset("assets/images/restaurant.png", 130),
+        ),
+      ),
+    );
+
+    allMarkers.add(
+      Marker(
+        markerId: MarkerId("Client"),
+        position: _clientPosition,
+        icon: BitmapDescriptor.fromBytes(
+          await getBytesFromAsset("assets/images/destination.png", 130),
+        ),
+      ),
+    );
+
+    // ✅ Vérifiez si le widget est encore monté
+    if (mounted) {
+      setState(() {
+        allMarkers = allMarkers;
+      });
+    }
   }
 
   Future<void> _getDirections(_origin, _destination, _waypoint) async {
     final String apiKey = 'AIzaSyDggn6Hwt1gbuAlfnvJ12OGr8Ygd2ufddQ';
     print(_origin.latitude);
     print(_origin.longitude);
-    print(_origin.latitude);
     final String url =
         'https://maps.googleapis.com/maps/api/directions/json?origin=${_origin.latitude},${_origin.longitude}&destination=${_destination.latitude},${_destination.longitude}&waypoints=${_waypoint.latitude},${_waypoint.longitude}&key=$apiKey';
 
@@ -103,7 +283,6 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _decodePolyline(String encoded) {
-    //List<LatLng> polylineCoordinates = [];
     int index = 0;
     int len = encoded.length;
     int lat = 0;
@@ -129,246 +308,101 @@ class _MapScreenState extends State<MapScreen> {
       int dlng = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
       lng += dlng;
 
-      _polylineCoordinates.add(LatLng(lat / 1E5, lng / 1E5));
+      _polylineCoordinates.add(LatLng((lat / 1E5), (lng / 1E5)));
     }
-  }
 
-  // Méthode pour récupérer les points de la polyline entre les points spécifiés
-  Future<List<LatLng>> _getPolylinePoints(
-      LatLng origin, LatLng destination) async {
-    PolylinePoints polylinePoints = PolylinePoints();
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        "AIzaSyDggn6Hwt1gbuAlfnvJ12OGr8Ygd2ufddQ", // Remplacez "YOUR_API_KEY" par votre clé d'API Google Maps
-        PointLatLng(origin.latitude, origin.longitude),
-        PointLatLng(destination.latitude, destination.longitude),
-        travelMode: TravelMode.driving);
-
-    List<LatLng> pointsList = [];
-    if (result.points.isNotEmpty) {
-      result.points.forEach((PointLatLng point) {
-        pointsList.add(LatLng(point.latitude, point.longitude));
-      });
-    }
-    return pointsList;
-  }
-
-  // Méthode pour mettre à jour la polyline en utilisant les points de la polyline obtenus
-  Future<void> _updatePolyline() async {
-    if (_currentLocation != null) {
-      List<LatLng> points = [];
-      points.add(
-          LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!));
-      if (!_shouldIncludeRestaurant()) {
-        // Ajoute le restaurant comme point d'étape uniquement si nécessaire
-        points
-            .addAll(await _getPolylinePoints(points.last, _restaurantPosition));
-      }
-      points.addAll(await _getPolylinePoints(points.last, _clientPosition));
-
+    // ✅ Vérifiez si le widget est encore monté
+    if (mounted) {
       setState(() {
-        _polylinePoints = points;
+        _polylineCoordinates = _polylineCoordinates;
       });
     }
-  }
-
-  double distanceBetween(double lat1, double lon1, double lat2, double lon2) {
-    const double earthRadius = 6371000; // rayon de la terre en mètres
-
-    double dLat = _degreesToRadians(lat2 - lat1);
-    double dLon = _degreesToRadians(lon2 - lon1);
-    double a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_degreesToRadians(lat1)) *
-            cos(_degreesToRadians(lat2)) *
-            sin(dLon / 2) *
-            sin(dLon / 2);
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    double distance = earthRadius * c;
-
-    return distance;
-  }
-
-  double _degreesToRadians(double degrees) {
-    return degrees * (pi / 180);
-  }
-
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _restaurantPosition = LatLng(
-          double.parse(widget.order.latRest),
-          double.parse(widget.order.lngRest));
-      _clientPosition = LatLng(double.parse(widget.order.lat),
-          double.parse(widget.order.lng));
-    });
-    Location location = Location();
-    try {
-      LocationData locationData = await location.getLocation();
-      setState(() {
-        _currentLocation = locationData;
-      });
-      print("Latitude: ${_currentLocation!.latitude}");
-      print("Longitude: ${_currentLocation!.longitude}");
-      _markeradd();
-    } catch (e) {
-      print("Error getting location: $e");
-    }
-    _getDirections(_currentLocation, _clientPosition, _restaurantPosition);
-  }
-
-  bool _shouldIncludeRestaurant() {
-    if (_currentLocation == null) return true;
-    double distance = distanceBetween(
-      _currentLocation!.latitude!,
-      _currentLocation!.longitude!,
-      _restaurantPosition.latitude,
-      _restaurantPosition.longitude,
-    );
-    return distance > 100; // Changer 100 par la distance seuil en mètres
-  }
-
-  _markeradd() async {
-    allMarkers.add(
-      Marker(
-        markerId: MarkerId("position livreur"),
-        position: LatLng(
-          _currentLocation!.latitude ?? 7.546855,
-          _currentLocation!.longitude ?? -5.5471,
-        ),
-        icon: BitmapDescriptor.fromBytes(
-          await getBytesFromAsset("assets/images/delivery.png", 130),
-        ),
-      ),
-    );
-    allMarkers.add(
-      Marker(
-        markerId: MarkerId("position restaurant"),
-        position: _restaurantPosition,
-        icon: BitmapDescriptor.fromBytes(
-          await getBytesFromAsset("assets/images/House_icon.png", 130),
-        ),
-      ),
-    );
-
-    allMarkers.add(
-      Marker(
-        markerId: MarkerId("position client"),
-        position: _clientPosition,
-        infoWindow: InfoWindow(title: 'Client'),
-        /* icon: BitmapDescriptor.fromBytes(
-          await getBytesFromAsset("assets/test/delivery.png", 130),
-        ), */
-      ),
-    );
-  }
-
-  static Future<Uint8List> getBytesFromAsset(String path, int width) async {
-    ByteData data = await rootBundle.load(path);
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
-        targetWidth: width);
-    ui.FrameInfo fi = await codec.getNextFrame();
-    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
-        .buffer
-        .asUint8List();
   }
 
   @override
   Widget build(BuildContext context) {
+    String? phone = widget.order.friend == 0
+        ? widget.order.phone
+        : widget.order.friendPhone;
     final order = widget.order;
-    String name =
-        order.friend == 0 ? order.userName : order.friendName!;
-    String phone = order.friend == 0 ? order.phone : order.friendPhone!;
-    print("order------------");
-    print(order);
+
     return Scaffold(
         body: Stack(
       children: [
-        const BgContainer(),
-        _currentLocation == null
-            ? Center(child: CircularProgressIndicator())
-            : GoogleMap(
-                zoomControlsEnabled: false,
-                myLocationEnabled: true,
-                mapType: MapType.terrain,
-                initialCameraPosition: CameraPosition(
-                  target: LatLng(
-                    _currentLocation!.latitude!,
-                    _currentLocation!.longitude!,
-                  ),
-                  zoom: 14,
-                ),
-                onMapCreated: (controller) {
-                  _controller = controller;
-                },
-                markers: Set.from(allMarkers),
-                polylines: {
-                  Polyline(
-                    polylineId: PolylineId('route'),
-                    color: Colors.blue,
-                    width: 5,
-                    //points: _polylinePoints
-                    points: [
-                      /* LatLng(_currentLocation!.latitude!,
-                          _currentLocation!.longitude!),
-                      if (_shouldIncludeRestaurant()) _restaurantPosition,
-                      _clientPosition, */
-                      ..._polylineCoordinates, // Ajoute les points de polylineCoordinates
-                    ],
-                  ),
-                },
+        if (_currentLocation != null)
+          GoogleMap(
+            onMapCreated: (GoogleMapController controller) {
+              _controller = controller;
+            },
+            markers: Set<Marker>.from(allMarkers),
+            polylines: Set<Polyline>.from([
+              Polyline(
+                polylineId: PolylineId('route'),
+                color: appColor,
+                width: 5,
+                points: _polylineCoordinates,
               ),
-        const CustomAppBar(
-          leadingImageAsset: drawer,
-          title: 'Map',
-          notificationImageAsset: notificationIcon,
-          smsImageAsset: mailIcon,
-        ),
+            ]),
+            initialCameraPosition: CameraPosition(
+              target: LatLng(
+                  _currentLocation!.latitude!, _currentLocation!.longitude!),
+              zoom: 15.0,
+            ),
+          )
+        else
+          Center(child: CircularProgressIndicator()),
         Positioned(
-          bottom: 50.0,
+          bottom: 0,
           left: 0,
           right: 0,
           child: Container(
-            padding: const EdgeInsets.all(8),
-            width: MediaQuery.of(context).size.width * 0.9,
-            height: 85.0,
-            margin: const EdgeInsets.only(bottom: 50.0),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-                color: white, borderRadius: BorderRadius.circular(12)),
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: Offset(0, -5),
+                ),
+              ],
+            ),
             child: Row(
               children: [
-                const CircleAvatar(
-                  maxRadius: 30,
-                  backgroundColor: white,
-                  backgroundImage: AssetImage(dpIcon),
-                ),
-                const SizedBox(
-                  width: 12,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    '$name'
-                        .text
-                        .size(14)
-                        .fontWeight(FontWeight.w600)
-                        .color(blackColor)
-                        .make(),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.call,
-                          color: appColor,
-                          size: 12,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Commande #${order.id}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-                        5.widthBox,
-                        '$phone'
-                            .text
-                            .size(12)
-                            .fontWeight(FontWeight.w600)
-                            .color(fontGrey.withOpacity(0.7))
-                            .make(),
-                      ],
-                    ),
-                  ],
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Client: ${order.friend == 0 ? order.userName : order.friendName}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        'Total: ${order.total} F',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: appColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const Spacer(),
                 Column(
@@ -388,7 +422,6 @@ class _MapScreenState extends State<MapScreen> {
                             onTap: () async {
                               SharedPreferences prefs =
                                   await SharedPreferences.getInstance();
-
                               Get.to(
                                   () => ChatScreen(
                                         orderId: order.id,
@@ -417,7 +450,9 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                           child: InkWell(
                             onTap: () {
-                              launchPhone(phone);
+                              if (phone != null && phone.isNotEmpty) {
+                                launchPhone(phone);
+                              }
                             },
                             child: Center(
                                 child: Icon(

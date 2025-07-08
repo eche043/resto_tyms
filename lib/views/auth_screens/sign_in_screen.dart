@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:odrive_restaurant/common/const/const.dart';
 import 'package:odrive_restaurant/providers/auth_provider.dart';
+import 'package:odrive_restaurant/providers/user_provider.dart';
 import 'package:odrive_restaurant/views/auth_screens/onboarding/role_selection_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -177,8 +178,6 @@ class _SignInScreenState extends State<SignInScreen> {
       BuildContext context,
       TextEditingController emailController,
       TextEditingController passwordController) {
-    final provider = Provider.of<AuthProvider>(context, listen: false);
-
     return Column(
       children: [
         25.heightBox,
@@ -188,18 +187,23 @@ class _SignInScreenState extends State<SignInScreen> {
               color: authProvider.loading ? grey : appColor,
               title: AppLocalizations.of(context)!.managerLogin,
               isLoading: authProvider.loading,
-              onPress: () {
+              onPress: () async {
+                // ✅ Ajouter async
                 if (!emailController.text.isEmpty &&
                     !passwordController.text.isEmpty) {
-                  provider
-                      .loginUser(emailController.text, passwordController.text)
-                      .then((_) {
-                    if (!provider.error) {
-                      Get.offAll(() => HomeScreen(),
-                          transition: Transition.downToUp,
-                          duration: const Duration(milliseconds: 500));
-                    }
-                  });
+                  // ✅ Injecter UserProvider dans AuthProvider
+                  final userProvider =
+                      Provider.of<UserProvider>(context, listen: false);
+                  authProvider.setUserProvider(userProvider);
+
+                  await authProvider.loginUser(
+                      emailController.text, passwordController.text);
+
+                  if (!authProvider.error) {
+                    Get.offAll(() => HomeScreen(),
+                        transition: Transition.downToUp,
+                        duration: const Duration(milliseconds: 500));
+                  }
                 }
               },
               context: context,
@@ -214,8 +218,6 @@ class _SignInScreenState extends State<SignInScreen> {
       BuildContext context,
       TextEditingController emailController,
       TextEditingController passwordController) {
-    final provider = Provider.of<AuthProvider>(context, listen: false);
-
     return Column(
       children: [
         25.heightBox,
@@ -225,18 +227,23 @@ class _SignInScreenState extends State<SignInScreen> {
               color: authProvider.loading ? grey : white,
               title: AppLocalizations.of(context)!.ownerLogin,
               isLoading: authProvider.loading,
-              onPress: () {
+              onPress: () async {
+                // ✅ Ajouter async
                 if (!emailController.text.isEmpty &&
                     !passwordController.text.isEmpty) {
-                  provider
-                      .loginUser(emailController.text, passwordController.text)
-                      .then((_) {
-                    if (!provider.error) {
-                      Get.offAll(() => HomeScreen(),
-                          transition: Transition.downToUp,
-                          duration: const Duration(milliseconds: 500));
-                    }
-                  });
+                  // ✅ Injecter UserProvider dans AuthProvider
+                  final userProvider =
+                      Provider.of<UserProvider>(context, listen: false);
+                  authProvider.setUserProvider(userProvider);
+
+                  await authProvider.loginUser(
+                      emailController.text, passwordController.text);
+
+                  if (!authProvider.error) {
+                    Get.offAll(() => HomeScreen(),
+                        transition: Transition.downToUp,
+                        duration: const Duration(milliseconds: 500));
+                  }
                 }
               },
               context: context,

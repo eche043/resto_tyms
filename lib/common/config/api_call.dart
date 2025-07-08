@@ -87,6 +87,217 @@ getOrders() async {
   }
 }
 
+Future<Map<String, dynamic>> verifyDeliveryCode(
+    String qrCodeLivreur, int orderId) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String uid = prefs.getString('uuid') ?? "";
+
+  var url = "${serverPath}verifyDeliveryCode";
+
+  try {
+    var response = await http
+        .post(Uri.parse(url),
+            headers: {
+              'Authorization': 'Bearer $uid',
+              'Content-type': 'application/json',
+              'Accept': "application/json",
+            },
+            body: jsonEncode({
+              'qr_code_livreur': qrCodeLivreur,
+              'order_id': orderId,
+            }))
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> body = json.decode(response.body);
+      return body;
+    } else {
+      print('Error response: ${response.body}');
+      return {
+        'error': 'Erreur de connexion (${response.statusCode})',
+        'status_code': response.statusCode
+      };
+    }
+  } catch (e) {
+    print('Exception in verifyDeliveryCode: $e');
+    return {'error': 'Erreur de connexion: ${e.toString()}'};
+  }
+}
+
+Future<Map<String, dynamic>> submitOffer({
+  required int restaurantId,
+  required String name,
+  required String description,
+  required String offerType,
+  int? triggerItemId, // ✅ Nouveau paramètre
+  double? minimumAmount,
+  required String rewardType,
+  double? rewardValue,
+  double? rewardPercentage,
+  int? freeProductId,
+  String? freeProductName,
+  int? pointsValue,
+  required String startDate,
+  required String endDate,
+  String frequency = 'once_per_day',
+  String? frequencyDetails,
+  String? conditions,
+  int imageId = 0,
+}) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String uid = prefs.getString('uuid') ?? "";
+
+  var url = "${serverPath}submitOffer";
+
+  try {
+    var response = await http
+        .post(Uri.parse(url),
+            headers: {
+              'Authorization': 'Bearer $uid',
+              'Content-type': 'application/json',
+              'Accept': "application/json",
+            },
+            body: jsonEncode({
+              'restaurant_id': restaurantId,
+              'name': name,
+              'description': description,
+              'offer_type': offerType,
+              'trigger_item_id': triggerItemId, // ✅ Ajout du paramètre
+              'minimum_amount': minimumAmount,
+              'reward_type': rewardType,
+              'reward_value': rewardValue,
+              'reward_percentage': rewardPercentage,
+              'free_product_id': freeProductId,
+              'free_product_name': freeProductName,
+              'points_value': pointsValue,
+              'start_date': startDate,
+              'end_date': endDate,
+              'frequency': frequency,
+              'frequency_details': frequencyDetails,
+              'conditions': conditions,
+              'imageid': imageId,
+            }))
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> body = json.decode(response.body);
+      return body;
+    } else {
+      return {
+        'error': 'Erreur de connexion (${response.statusCode})',
+        'status_code': response.statusCode
+      };
+    }
+  } catch (e) {
+    return {'error': 'Erreur de connexion: ${e.toString()}'};
+  }
+}
+
+Future<Map<String, dynamic>> getRestaurantOffers({
+  required int restaurantId,
+  String? status,
+}) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String uid = prefs.getString('uuid') ?? "";
+
+  var url = "${serverPath}getRestaurantOffers";
+
+  try {
+    var response = await http
+        .post(Uri.parse(url),
+            headers: {
+              'Authorization': 'Bearer $uid',
+              'Content-type': 'application/json',
+              'Accept': "application/json",
+            },
+            body: jsonEncode({
+              'status': status,
+            }))
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> body = json.decode(response.body);
+      return body;
+    } else {
+      return {
+        'error': 'Erreur de connexion (${response.statusCode})',
+        'status_code': response.statusCode
+      };
+    }
+  } catch (e) {
+    return {'error': 'Erreur de connexion: ${e.toString()}'};
+  }
+}
+
+// lib/common/config/api_call.dart - Ajouter cette fonction
+
+Future<Map<String, dynamic>> getRestaurantProducts(int restaurantId) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String uid = prefs.getString('uuid') ?? "";
+
+  var url = "${serverPath}getRestaurant?restaurant=$restaurantId";
+
+  try {
+    var response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $uid',
+        'Content-type': 'application/json',
+        'Accept': "application/json",
+      },
+    ).timeout(const Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> body = json.decode(response.body);
+
+      if (body['error'] == '0') {
+        // Extraire et formater les produits
+        List<dynamic> foods = body['foods'] ?? [];
+        List<Map<String, dynamic>> formattedProducts = foods
+            .map((food) {
+              return {
+                'id': food['id'],
+                'name': food['name'],
+                'price': food['price'],
+                'image': food['image'] != 'noimage.png'
+                    ? '${serverImages}${food['image']}'
+                    : null,
+                'description': food['desc'],
+                'category': food['category'],
+                'published': food['published'],
+                'etat': food['etat'],
+              };
+            })
+            .where((product) =>
+                // Filtrer seulement les produits publiés et disponibles
+                product['published'] == 1 && product['etat'] == 'Disponible')
+            .toList();
+
+        return {
+          'error': '0',
+          'products': formattedProducts,
+          'restaurant': body['restaurant'],
+        };
+      } else {
+        return {
+          'error': body['error'] ?? 'Erreur inconnue',
+          'products': [],
+        };
+      }
+    } else {
+      return {
+        'error': 'Erreur de connexion (${response.statusCode})',
+        'products': [],
+      };
+    }
+  } catch (e) {
+    return {
+      'error': 'Erreur de connexion: ${e.toString()}',
+      'products': [],
+    };
+  }
+}
+
 sendLocation(String lat, String lng, String speed) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String uid = prefs.getString('uuid') ?? "";
@@ -1683,24 +1894,50 @@ Future<dynamic> addRestaurantStatus(
 }
 
 void saveUserDataToSharedPreferences(
-    Map<String, dynamic> userData, String password, String uuid, notify) async {
+    Map<String, dynamic> userData, String password, String uuid, notify,
+    {List<dynamic>? restaurants}) async {
+  // ✅ Nouveau paramètre optionnel
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
   print(uuid);
 
+  // Données utilisateur existantes
   prefs.setInt('userId', userData['id']);
   prefs.setString('userName', userData['name']);
   prefs.setString('userEmail', userData['email']);
   prefs.setString('userPassword', password);
   prefs.setInt('userRole', userData['role']);
   prefs.setInt('userImageId', userData['imageid'] ?? 0);
-
   prefs.setString('userPhone', userData['phone']);
   prefs.setString('userAvatar', userData['avatar']);
   prefs.setString('uuid', uuid);
-
-  print(prefs.getString("uuid"));
   prefs.setString('userAddress', userData['address'] ?? "");
+
+  // ✅ Nouvelle gestion des restaurants
+  if (restaurants != null && restaurants.isNotEmpty) {
+    // Sauvegarder la liste des restaurants comme List<String>
+    List<String> restaurantsStringList =
+        restaurants.map((e) => e.toString()).toList();
+    await prefs.setStringList('userRestaurants', restaurantsStringList);
+    await prefs.setInt('restaurantCount', restaurants.length);
+
+    // Sauvegarder le premier restaurant comme restaurant par défaut
+    await prefs.setInt('defaultRestaurantId', restaurants[0]);
+
+    print('Restaurants sauvegardés: $restaurantsStringList');
+  } else {
+    // Nettoyer les données restaurants si l'utilisateur n'en gère aucun
+    await prefs.remove('userRestaurants');
+    await prefs.remove('restaurantCount');
+    await prefs.remove('defaultRestaurantId');
+    print('Aucun restaurant assigné - données nettoyées');
+  }
+
+  // Sauvegarder la timestamp de connexion
+  await prefs.setInt('loginTimestamp', DateTime.now().millisecondsSinceEpoch);
+
+  print("UUID sauvegardé: ${prefs.getString("uuid")}");
+  print("Restaurants sauvegardés: ${prefs.getStringList('userRestaurants')}");
 
   account.okUserEnter(
       userData['name'],
@@ -1711,6 +1948,4 @@ void saveUserDataToSharedPreferences(
       userData['phone'],
       notify,
       userData['id'].toString());
-
-  // ... ajoutez d'autres champs que vous souhaitez enregistrer
 }

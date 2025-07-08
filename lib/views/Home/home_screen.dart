@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:odrive_restaurant/common/const/colors.dart' as colors;
 import 'package:odrive_restaurant/common/const/const.dart';
+import 'package:odrive_restaurant/common/widgets/custom_bottom_navigation.dart';
 import 'package:odrive_restaurant/common/widgets/dashboardCard.dart';
 import 'package:odrive_restaurant/providers/dashboard_provider.dart';
 import 'package:odrive_restaurant/views/Home/widgets/best_selling_chart.dart';
@@ -10,6 +11,7 @@ import 'package:odrive_restaurant/views/Home/widgets/payment_history_list.dart';
 import 'package:odrive_restaurant/views/Home/widgets/ranking_list.dart';
 import 'package:odrive_restaurant/views/Home/widgets/stats_card.dart';
 import 'package:odrive_restaurant/views/Home/widgets/stats_chart.dart';
+import 'package:odrive_restaurant/views/orders/in_progress_screen.dart';
 import 'package:odrive_restaurant/views/orders/orders_screen.dart';
 import 'package:odrive_restaurant/views/products/product_screen.dart';
 import 'package:odrive_restaurant/views/restaurants/restaurant_screen.dart';
@@ -26,6 +28,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0; // ✅ Index pour la navigation
   @override
   void initState() {
     super.initState();
@@ -41,59 +44,64 @@ class _HomeScreenState extends State<HomeScreen> {
     provider.initializeDashboard();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  // ✅ Liste des écrans pour chaque onglet
+  List<Widget> get _screens => [
+        _buildHomeContent(), // Contenu original du HomeScreen
+        const InProgressScreen(), // Live
+        OrdersScreen(), // Commandes
+      ];
+
+  // ✅ Contenu original du HomeScreen extrait en méthode
+  Widget _buildHomeContent() {
     final provider = Provider.of<DashboardProvider>(context);
-    return Scaffold(
-      drawer: const CustomDrawer(),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _fetchData();
-        },
-        child: Stack(
-          children: [
-            const BgContainer(),
-            CustomAppBar(
-              leadingImageAsset: drawer,
-              title: AppLocalizations.of(context)!.home,
-              notificationImageAsset: notificationIcon,
-              smsImageAsset: mailIcon,
-            ),
-            Positioned(
-              top: 115,
-              left: 8,
-              right: 8,
-              bottom: 0,
-              child: provider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (provider.error != null)
-                            Text(
-                              provider.error!,
-                              style: TextStyle(color: Colors.red),
-                            ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _fetchData();
+      },
+      child: Stack(
+        children: [
+          const BgContainer(),
+          CustomAppBar(
+            leadingImageAsset: drawer,
+            title: AppLocalizations.of(context)!.home,
+            notificationImageAsset: notificationIcon,
+            smsImageAsset: mailIcon,
+          ),
+          Positioned(
+            top: 115,
+            left: 8,
+            right: 8,
+            bottom: 0,
+            child: provider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (provider.error != null)
+                          Text(
+                            provider.error!,
+                            style: TextStyle(color: Colors.red),
+                          ),
 
-                          // Section des statistiques principales (adaptée)
-                          _buildStatsSection(provider),
+                        // Section des statistiques principales (adaptée)
+                        _buildStatsSection(provider),
 
-                          const SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
-                          // Section des graphiques et données dynamiques
-                          _buildChartSection(provider),
+                        // Section des graphiques et données dynamiques
+                        _buildChartSection(provider),
 
-                          const SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
-                          // Section Ranking et Produits populaires
-                          _buildRankingAndProductsSection(provider),
+                        // Section Ranking et Produits populaires
+                        _buildRankingAndProductsSection(provider),
 
-                          const SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
-                          // Section Navigation Cards (existante)
-                          /* _buildDashboardCards(
+                        // Section Navigation Cards (existante)
+                        /* _buildDashboardCards(
                             [
                               {
                                 'title':
@@ -121,14 +129,81 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ), */
 
-                          const SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
-                          // Historique des paiements
-                          _buildPaymentHistorySection(provider),
-                        ],
-                      ),
+                        // Historique des paiements
+                        _buildPaymentHistorySection(provider),
+                      ],
                     ),
-            )
+                  ),
+          )
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: const CustomDrawer(),
+      body: _screens[_currentIndex],
+      bottomNavigationBar: _buildCustomBottomNavigation(),
+    );
+  }
+
+  // ✅ Bottom navigation utilisant le composant externe
+  Widget _buildCustomBottomNavigation() {
+    return CustomBottomNavigationModern(
+      currentIndex: _currentIndex,
+      onTap: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? appColor.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected ? appColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.grey.shade600,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 4),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? appColor : Colors.grey.shade600,
+              ),
+              child: Text(label),
+            ),
           ],
         ),
       ),
@@ -164,6 +239,15 @@ class _HomeScreenState extends State<HomeScreen> {
             StatsCard(
               title: l10n.totalRestaurants,
               value: provider.totalRestaurants.toString(),
+              onDetailPressed: () {
+                Get.to(() => const RestaurantsDetailScreen());
+                // TODO: Navigation vers les détails des restaurants
+              },
+            ),
+            const SizedBox(height: 12),
+            StatsCard(
+              title: l10n.totalEarnings,
+              value: provider.totalEarnings.toString(),
               onDetailPressed: () {
                 Get.to(() => const RestaurantsDetailScreen());
                 // TODO: Navigation vers les détails des restaurants
